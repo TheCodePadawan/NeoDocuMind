@@ -192,6 +192,99 @@ CI (GitHub Actions) fuehrt bei jedem Push Linting und Tests fuer Python 3.10 bis
 
 ---
 
+## Produktivbetrieb (AWS / Azure)
+
+Dieses Repository laeuft der Klarheit halber als einzelner Prozess, ist aber so
+aufgebaut, dass jede Schicht sauber auf verwaltete Cloud-Dienste abgebildet
+werden kann. Die schmalen Schnittstellen (`vectorstore.py`, `llm.py`,
+`embeddings.py`) sind die Stellen zum Austauschen.
+
+### Von der Demo zur Produktion: was sich aendert
+
+| Aspekt | Diese Demo | Produktion |
+| --- | --- | --- |
+| Vektorspeicher | FAISS-Datei auf lokaler Festplatte | Verwaltet: AWS OpenSearch / Aurora pgvector oder Azure AI Search |
+| Dokumente | Lokaler `data/`-Ordner | Objektspeicher: S3 oder Azure Blob Storage |
+| Indexierung | Beim Start / per CLI | Ereignisgesteuerter Job beim Hochladen eines Dokuments |
+| Embeddings | Lokale sentence-transformers | Batch-Endpoint (SageMaker / Azure ML) oder gehostete API |
+| LLM | Ein Anbieter ueber Umgebungsvariable | Verwalteter Endpoint: AWS Bedrock oder Azure OpenAI, hinter einem Gateway |
+| Auslieferung | Ein Container | Automatisch skalierende Container hinter einem Load Balancer |
+| Geheimnisse | `.env`-Datei | AWS Secrets Manager / Azure Key Vault |
+| Beobachtbarkeit | Konsolen-Logs | Tracing, Metriken und Online-Evaluierung (Latenz, Fundiertheit) |
+
+### Produktionsarchitektur
+
+```mermaid
+flowchart LR
+    U[Nutzer] --> CDN[HTTPS / API Gateway]
+    CDN --> API[RAG-API-Dienst<br/>skalierende Container]
+
+    subgraph Ingestion["Indexierungs-Pipeline (asynchron)"]
+        UP[Dokument-Upload] --> OBJ[(Objektspeicher<br/>S3 / Blob)]
+        OBJ -->|Ereignis| WK[Ingest-Worker<br/>Chunking + Embedding]
+        WK --> VDB[(Verwalteter Vektorspeicher)]
+    end
+
+    API --> VDB
+    API --> LLM[Verwaltetes LLM<br/>Bedrock / Azure OpenAI]
+    API --> OBS[Logs / Traces / Metriken]
+    SEC[Secrets Manager] -.-> API
+    SEC -.-> WK
+```
+
+### AWS-Referenzstack
+
+- **Container**: mit dem enthaltenen `Dockerfile` paketieren, nach ECR pushen,
+  auf ECS Fargate (oder EKS) hinter einem Application Load Balancer betreiben.
+- **Vektorspeicher**: Amazon OpenSearch Service (k-NN) oder Aurora PostgreSQL
+  mit `pgvector`. Nur `vectorstore.py` austauschen, der Rest bleibt gleich.
+- **Dokumente + Indexierung**: nach S3 hochladen, beim `s3:ObjectCreated`-Ereignis
+  eine Lambda- oder Fargate-Aufgabe zum Chunking, Embedding und Upsert ausloesen.
+- **LLM + Embeddings**: Amazon Bedrock fuer die Generierung; SageMaker oder
+  Bedrock fuer Embeddings.
+- **Geheimnisse / Konfiguration**: AWS Secrets Manager + SSM Parameter Store.
+- **CI/CD**: GitHub Actions baut und pusht das Image und deployt nach ECS.
+
+### Azure-Referenzstack
+
+- **Container**: Azure Container Apps (oder AKS), Image in der Azure Container
+  Registry.
+- **Vektorspeicher**: Azure AI Search (Vektor + hybrid + semantisches Ranking)
+  oder Azure Database for PostgreSQL mit `pgvector`.
+- **Dokumente + Indexierung**: Azure Blob Storage mit Event-Grid-Trigger, der
+  eine Azure Function / einen Container-App-Job zur Indexierung aufruft.
+- **LLM + Embeddings**: Azure-OpenAI-Deployments.
+- **Geheimnisse / Konfiguration**: Azure Key Vault + App Configuration.
+- **CI/CD**: GitHub Actions nach ACR, dann Deployment in Container Apps.
+
+### Produktions-Checkliste
+
+- Den **Indexierungs-Job** vom **Abfrage-Dienst** trennen, damit aufwaendiges
+  Indexieren keine Nutzeranfragen blockiert und unabhaengig skalieren kann.
+- Einen **verwalteten, persistenten Vektorspeicher** nutzen (die lokale
+  FAISS-Datei ueberlebt keinen Container-Neustart und skaliert nicht horizontal).
+- **Authentifizierung** (API-Schluessel / OAuth), **Rate Limiting** und
+  **Mandantentrennung** ergaenzen, falls Dokumente kundenspezifisch sind.
+- **Beobachtbarkeit** ergaenzen: Request-Tracing, Abruf-/Antwort-Latenz,
+  Token-Kosten und **Online-Evaluierung** (Stichproben echten Traffics).
+- Das **Offline-Evaluierungsframework in der CI** behalten, damit Abrufqualitaet
+  bei jeder Aenderung ein Gate ist, kein nachtraeglicher Gedanke.
+- Embeddings und haeufige Antworten cachen; Dokument-Embeddings fuer Durchsatz
+  batchen.
+
+### "Wie wuerden Sie das produktiv umsetzen?" (Kurzfassung)
+
+> Dieselbe Retrieve-Rerank-Generate-Pipeline beibehalten, aber in einen
+> asynchronen Indexierungsdienst und eine zustandslose Abfrage-API aufteilen.
+> Dokumente im Objektspeicher und Vektoren in einem verwalteten Speicher
+> (pgvector / OpenSearch / Azure AI Search) ablegen. Ein verwaltetes LLM
+> (Bedrock / Azure OpenAI) ueber ein Gateway aufrufen, Geheimnisse im Vault.
+> Als Container mit Autoscaling ausliefern, Tracing und Kostenmetriken einbinden
+> und die Evaluierungs-Suite in der CI behalten, damit Abrufqualitaet bei jedem
+> Deployment gemessen wird.
+
+---
+
 ## Projektstruktur
 
 ```

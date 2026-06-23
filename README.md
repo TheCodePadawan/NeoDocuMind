@@ -194,6 +194,96 @@ CI (GitHub Actions) runs lint and tests across Python 3.10 to 3.12 on every push
 
 ---
 
+## Deploying to production (AWS / Azure)
+
+This repository runs as a single process for clarity, but it is structured so
+each layer maps cleanly onto managed cloud services. The thin interfaces
+(`vectorstore.py`, `llm.py`, `embeddings.py`) are the seams you swap.
+
+### From demo to production: what changes
+
+| Concern | This demo | Production |
+| --- | --- | --- |
+| Vector store | FAISS file on local disk | Managed: AWS OpenSearch / Aurora pgvector, or Azure AI Search |
+| Documents | Local `data/` folder | Object storage: S3 or Azure Blob Storage |
+| Ingestion | Run on startup / CLI | Event-driven job triggered when a document is uploaded |
+| Embeddings | Local sentence-transformers | Batch endpoint (SageMaker / Azure ML) or a hosted embedding API |
+| LLM | Single provider via env var | Managed endpoint: AWS Bedrock or Azure OpenAI, behind a gateway |
+| Serving | One container | Autoscaling containers behind a load balancer |
+| Secrets | `.env` file | AWS Secrets Manager / Azure Key Vault |
+| Observability | Console logs | Tracing, metrics, and online eval (latency, groundedness) |
+
+### Production architecture
+
+```mermaid
+flowchart LR
+    U[User] --> CDN[HTTPS / API Gateway]
+    CDN --> API[RAG API service<br/>autoscaling containers]
+
+    subgraph Ingestion["Ingestion pipeline (async)"]
+        UP[Document upload] --> OBJ[(Object storage<br/>S3 / Blob)]
+        OBJ -->|event| WK[Ingest worker<br/>chunk + embed]
+        WK --> VDB[(Managed vector store)]
+    end
+
+    API --> VDB
+    API --> LLM[Managed LLM<br/>Bedrock / Azure OpenAI]
+    API --> OBS[Logs / traces / metrics]
+    SEC[Secrets manager] -.-> API
+    SEC -.-> WK
+```
+
+### AWS reference stack
+
+- **Containers**: package with the included `Dockerfile`, push to ECR, run on
+  ECS Fargate (or EKS) behind an Application Load Balancer.
+- **Vector store**: Amazon OpenSearch Service (k-NN) or Aurora PostgreSQL with
+  `pgvector`. Swap `vectorstore.py` for that client; the rest is unchanged.
+- **Documents + ingestion**: upload to S3, trigger a Lambda or Fargate task on
+  the `s3:ObjectCreated` event to chunk, embed, and upsert vectors.
+- **LLM + embeddings**: Amazon Bedrock for generation; SageMaker or Bedrock for
+  embeddings.
+- **Secrets / config**: AWS Secrets Manager + SSM Parameter Store.
+- **CI/CD**: GitHub Actions builds and pushes the image, then deploys to ECS.
+
+### Azure reference stack
+
+- **Containers**: Azure Container Apps (or AKS), image stored in Azure Container
+  Registry.
+- **Vector store**: Azure AI Search (vector + hybrid + semantic ranking) or
+  Azure Database for PostgreSQL with `pgvector`.
+- **Documents + ingestion**: Azure Blob Storage with an Event Grid trigger
+  invoking an Azure Function / Container App job to ingest.
+- **LLM + embeddings**: Azure OpenAI deployments.
+- **Secrets / config**: Azure Key Vault + App Configuration.
+- **CI/CD**: GitHub Actions to ACR, then deploy to Container Apps.
+
+### Production checklist
+
+- Separate the **ingestion job** from the **query service** so heavy indexing
+  never blocks user requests, and re-indexing can scale independently.
+- Use a **managed, persistent vector store** (the local FAISS file does not
+  survive container restarts and does not scale horizontally).
+- Add **authentication** (API keys / OAuth), **rate limiting**, and **per-tenant
+  isolation** if documents are customer-specific.
+- Add **observability**: request tracing, retrieval/answer latency, token cost,
+  and **online evaluation** (sample real traffic for groundedness/relevance).
+- Keep the **offline evaluation harness in CI** so retrieval quality is a gate,
+  not an afterthought, on every change.
+- Cache embeddings and frequent answers; batch document embedding for throughput.
+
+### "How would you implement this in production?" (short version)
+
+> Keep the same retrieve-rerank-generate pipeline, but split it into an
+> asynchronous ingestion service and a stateless query API. Store documents in
+> object storage and vectors in a managed store (pgvector / OpenSearch / Azure AI
+> Search). Call a managed LLM (Bedrock / Azure OpenAI) through a gateway, with
+> secrets in a vault. Ship it as containers with autoscaling, wire in tracing and
+> cost metrics, and keep the evaluation suite in CI so retrieval quality is
+> measured on every deploy.
+
+---
+
 ## Project structure
 
 ```

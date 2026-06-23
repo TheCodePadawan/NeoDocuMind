@@ -23,7 +23,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from documind.config import get_settings  # noqa: E402
-from documind.indexer import build_index  # noqa: E402
+from documind.indexer import build_index, read_manifest  # noqa: E402
 from documind.llm import LLMConfigError  # noqa: E402
 from documind.pipeline import RAGPipeline  # noqa: E402
 
@@ -119,10 +119,7 @@ def main() -> None:
         )
         if uploaded and st.button("Index uploaded documents", type="primary"):
             _index_uploaded_files(uploaded)
-
-        active = st.session_state.get("active_corpus", "bundled sample documents")
-        st.caption(f"Current knowledge base: **{active}**")
-        if st.session_state.get("active_corpus"):
+        if UPLOAD_DIR.exists():
             if st.button("Reset to sample documents"):
                 _reset_to_samples()
 
@@ -141,6 +138,9 @@ def main() -> None:
             "`python -m scripts.ingest_sample --source <folder>`, then reload."
         )
         return
+
+    with st.sidebar:
+        _render_indexed_docs()
 
     if "history" not in st.session_state:
         st.session_state.history = []
@@ -168,6 +168,19 @@ def main() -> None:
     st.session_state.history.append(
         {"role": "assistant", "content": result.answer, "sources": result.sources}
     )
+
+
+def _render_indexed_docs() -> None:
+    """List the documents currently in the knowledge base (survives reloads)."""
+    manifest = read_manifest(get_settings().storage_path)
+    if not manifest or not manifest.get("sources"):
+        return
+    sources = manifest["sources"]
+    total = manifest.get("total_chunks", sum(sources.values()))
+    st.divider()
+    st.markdown(f"**Knowledge base:** {len(sources)} file(s), {total} chunks")
+    for name, count in sources.items():
+        st.caption(f"- {name}  ({count} chunks)")
 
 
 def _render_sources(sources: list[dict]) -> None:
