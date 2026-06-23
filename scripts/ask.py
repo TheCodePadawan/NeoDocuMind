@@ -1,4 +1,4 @@
-"""Ask DocuMind a question from the command line.
+"""Ask NeoDocuMind a question from the command line.
 
 Usage:
     python -m scripts.ask "What is the PTO carryover policy?"
@@ -12,7 +12,7 @@ from . import _bootstrap  # noqa: F401  (adds src/ to sys.path)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Query the DocuMind index.")
+    parser = argparse.ArgumentParser(description="Query the NeoDocuMind index.")
     parser.add_argument("question", help="The question to ask.")
     args = parser.parse_args()
 

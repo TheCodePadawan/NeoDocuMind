@@ -8,6 +8,7 @@ Run with:  streamlit run app/streamlit_app.py
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,23 +21,41 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from documind.config import get_settings  # noqa: E402
+from documind.indexer import build_index  # noqa: E402
+from documind.llm import LLMConfigError  # noqa: E402
 from documind.pipeline import RAGPipeline  # noqa: E402
 
-st.set_page_config(page_title="DocuMind", page_icon="📄", layout="wide")
+SAMPLE_DOCS = ROOT / "data" / "sample_docs"
+
+st.set_page_config(page_title="NeoDocuMind", layout="wide")
+
+# On Streamlit Community Cloud, configuration is provided via the Secrets UI.
+# Mirror those secrets into environment variables so pydantic Settings picks
+# them up (works locally with a .env file too).
+try:
+    for _key, _value in st.secrets.items():
+        if isinstance(_value, str):
+            os.environ.setdefault(_key, _value)
+except Exception:
+    pass
 
 
-@st.cache_resource(show_spinner="Loading models and index…")
-def load_pipeline() -> RAGPipeline | None:
+@st.cache_resource(show_spinner="Loading models and index...")
+def load_pipeline() -> RAGPipeline:
+    settings = get_settings()
     try:
-        return RAGPipeline.from_storage(get_settings())
+        return RAGPipeline.from_storage(settings)
     except FileNotFoundError:
-        return None
+        # First run (e.g. a fresh cloud deploy): build the index from the
+        # bundled sample documents so the demo works out of the box.
+        build_index(SAMPLE_DOCS, settings)
+        return RAGPipeline.from_storage(settings)
 
 
 def main() -> None:
-    st.title("📄 DocuMind")
+    st.title("NeoDocuMind")
     st.caption(
-        "Production-grade Retrieval-Augmented Generation — hybrid search, "
+        "Production-grade Retrieval-Augmented Generation: hybrid search, "
         "cross-encoder reranking, and grounded answers with citations."
     )
 
@@ -54,11 +73,19 @@ def main() -> None:
             "```bash\npython -m scripts.ingest_sample\n```"
         )
 
-    pipeline = load_pipeline()
-    if pipeline is None:
+    try:
+        pipeline = load_pipeline()
+    except LLMConfigError:
+        st.error(
+            "No language-model provider is configured. Set `GROQ_API_KEY` "
+            "(free at https://console.groq.com/keys) with `LLM_PROVIDER=groq`, "
+            "or `OPENAI_API_KEY`, then reload."
+        )
+        return
+    except FileNotFoundError:
         st.warning(
-            "No index found. Build it first by running "
-            "`python -m scripts.ingest_sample` in your terminal, then refresh."
+            "No documents found to index. Add files to `data/sample_docs/` or run "
+            "`python -m scripts.ingest_sample --source <folder>`, then reload."
         )
         return
 
@@ -71,7 +98,7 @@ def main() -> None:
             if turn.get("sources"):
                 _render_sources(turn["sources"])
 
-    question = st.chat_input("Ask a question about your documents…")
+    question = st.chat_input("Ask a question about your documents...")
     if not question:
         return
 
@@ -80,7 +107,7 @@ def main() -> None:
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("Retrieving and reasoning…"):
+        with st.spinner("Retrieving and reasoning..."):
             result = pipeline.answer(question)
         st.markdown(result.answer)
         _render_sources(result.sources)
@@ -93,7 +120,7 @@ def main() -> None:
 def _render_sources(sources: list[dict]) -> None:
     if not sources:
         return
-    with st.expander(f"📚 Sources ({len(sources)})"):
+    with st.expander(f"Sources ({len(sources)})"):
         for s in sources:
             st.markdown(f"**`{s.get('citation_id')}`**")
             st.caption(s.get("preview", ""))

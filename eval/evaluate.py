@@ -1,13 +1,13 @@
-"""Evaluation harness for DocuMind.
+"""Evaluation harness for NeoDocuMind.
 
 Two layers of metrics:
 
-1. **Retrieval quality (free, offline)** — for each labelled question we check
+1. **Retrieval quality (free, offline)**: for each labelled question we check
    whether the reranked results surface the correct source document.
      * Hit@N   : fraction of questions whose correct source is retrieved.
      * MRR      : mean reciprocal rank of the first correct source.
 
-2. **Answer quality (optional, needs an LLM)** — with ``--with-llm`` the full
+2. **Answer quality (optional, needs an LLM)**: with ``--with-llm`` the full
    pipeline generates answers and we measure keyword recall against the gold
    answer. Skipped automatically if no provider key is configured.
 
@@ -116,7 +116,7 @@ def evaluate(with_llm: bool = False) -> dict:
     output = {"summary": summary, "details": rows}
     RESULTS_PATH.write_text(json.dumps(output, indent=2, ensure_ascii=False), "utf-8")
 
-    print("\n=== DocuMind Evaluation ===")
+    print("\n=== NeoDocuMind Evaluation ===")
     for key, value in summary.items():
         print(f"{key:>22}: {value}")
     print(f"\nFull results written to {RESULTS_PATH}")
@@ -124,7 +124,7 @@ def evaluate(with_llm: bool = False) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate DocuMind retrieval/answers.")
+    parser = argparse.ArgumentParser(description="Evaluate NeoDocuMind retrieval/answers.")
     parser.add_argument(
         "--with-llm",
         action="store_true",

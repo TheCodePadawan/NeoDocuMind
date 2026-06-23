@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="DocuMind RAG API",
+    title="NeoDocuMind RAG API",
     description="Ask grounded questions over your document collection.",
     version="0.1.0",
     lifespan=lifespan,

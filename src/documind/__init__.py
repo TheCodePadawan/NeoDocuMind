@@ -1,4 +1,4 @@
-"""DocuMind - a production-grade Retrieval-Augmented Generation (RAG) assistant.
+"""NeoDocuMind - a production-grade Retrieval-Augmented Generation (RAG) assistant.
 
 Public surface kept intentionally small; import submodules directly for the rest.
 """

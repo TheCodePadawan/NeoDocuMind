@@ -13,7 +13,7 @@ from . import _bootstrap  # noqa: F401  (adds src/ to sys.path)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Ingest documents into DocuMind.")
+    parser = argparse.ArgumentParser(description="Ingest documents into NeoDocuMind.")
     parser.add_argument(
         "--source",
         default="data/sample_docs",
