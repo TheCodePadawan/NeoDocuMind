@@ -1,7 +1,8 @@
-"""DocuMind demo UI.
+"""NeoDocuMind demo UI.
 
 A clean chat interface over the RAG pipeline with expandable source citations,
-so reviewers can see *why* the assistant answered the way it did.
+so reviewers can see *why* the assistant answered the way it did. Supports
+uploading your own PDF / TXT / MD documents and chatting with them.
 
 Run with:  streamlit run app/streamlit_app.py
 """
@@ -9,6 +10,7 @@ Run with:  streamlit run app/streamlit_app.py
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -26,6 +28,8 @@ from documind.llm import LLMConfigError  # noqa: E402
 from documind.pipeline import RAGPipeline  # noqa: E402
 
 SAMPLE_DOCS = ROOT / "data" / "sample_docs"
+UPLOAD_DIR = ROOT / "data" / "uploads"
+SUPPORTED_TYPES = ["pdf", "txt", "md", "markdown"]
 
 st.set_page_config(page_title="NeoDocuMind", layout="wide")
 
@@ -52,6 +56,45 @@ def load_pipeline() -> RAGPipeline:
         return RAGPipeline.from_storage(settings)
 
 
+def _rebuild_index(source_dir: Path, corpus_label: str | None) -> None:
+    """Index a folder of documents and refresh the cached pipeline.
+
+    ``corpus_label`` of None marks the default sample corpus.
+    """
+    try:
+        with st.spinner("Indexing documents (chunking + embedding)... this can "
+                        "take a moment for large files."):
+            n_chunks = build_index(source_dir, get_settings())
+    except ValueError as exc:
+        st.error(str(exc))
+        return
+    load_pipeline.clear()
+    if corpus_label:
+        st.session_state["active_corpus"] = corpus_label
+    else:
+        st.session_state.pop("active_corpus", None)
+    st.session_state["history"] = []
+    target = corpus_label or "the bundled sample documents"
+    st.success(f"Indexed {n_chunks} chunks. You can now ask questions about {target}.")
+    st.rerun()
+
+
+def _index_uploaded_files(files) -> None:
+    if UPLOAD_DIR.exists():
+        shutil.rmtree(UPLOAD_DIR)
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    for file in files:
+        (UPLOAD_DIR / file.name).write_bytes(file.getbuffer())
+    label = files[0].name if len(files) == 1 else f"{len(files)} uploaded files"
+    _rebuild_index(UPLOAD_DIR, label)
+
+
+def _reset_to_samples() -> None:
+    if UPLOAD_DIR.exists():
+        shutil.rmtree(UPLOAD_DIR, ignore_errors=True)
+    _rebuild_index(SAMPLE_DOCS, None)
+
+
 def main() -> None:
     st.title("NeoDocuMind")
     st.caption(
@@ -68,10 +111,20 @@ def main() -> None:
             "- **Provider-agnostic LLM**: OpenAI / Groq / Ollama"
         )
         st.divider()
-        st.caption(
-            "The search index over the bundled sample documents is built "
-            "automatically on first launch, so you can start asking right away."
+        st.subheader("Chat with your own documents")
+        uploaded = st.file_uploader(
+            "Upload PDF / TXT / MD files (e.g. a book, report, or handbook)",
+            type=SUPPORTED_TYPES,
+            accept_multiple_files=True,
         )
+        if uploaded and st.button("Index uploaded documents", type="primary"):
+            _index_uploaded_files(uploaded)
+
+        active = st.session_state.get("active_corpus", "bundled sample documents")
+        st.caption(f"Current knowledge base: **{active}**")
+        if st.session_state.get("active_corpus"):
+            if st.button("Reset to sample documents"):
+                _reset_to_samples()
 
     try:
         pipeline = load_pipeline()

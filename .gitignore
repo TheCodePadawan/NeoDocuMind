@@ -28,6 +28,9 @@ storage/
 .cache/
 models/
 
+# User-uploaded documents (added at runtime via the web UI)
+data/uploads/
+
 # Testing / coverage
 .pytest_cache/
 .coverage
