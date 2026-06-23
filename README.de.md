@@ -91,8 +91,11 @@ Repository tragen die Marke NeoDocuMind.
 ## Ergebnisse
 
 Gemessen an einem handannotierten Benchmark mit 12 Fragen ueber dem
-mitgelieferten Beispielkorpus (`python -m eval.evaluate`). Embeddings und
-Reranking sind lokale Modelle, daher laeuft dies kostenlos und offline.
+mitgelieferten Beispielkorpus. Abruf-Metriken nutzen lokale Modelle und laufen
+kostenlos und offline; Antwortqualitaets-Metriken nutzen das konfigurierte LLM
+(hier Groq `llama-3.3-70b-versatile`).
+
+**Abruf** (`python -m eval.evaluate`)
 
 | Metrik | Wert |
 | --- | --- |
@@ -102,11 +105,20 @@ Reranking sind lokale Modelle, daher laeuft dies kostenlos und offline.
 | Embedding-Modell | `BAAI/bge-small-en-v1.5` |
 | Reranker-Modell | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 
+**Antwortqualitaet** (`python -m eval.evaluate --judge`)
+
+| Metrik | Wert |
+| --- | --- |
+| Schluesselwort-Recall gegen Referenzantworten | 1.00 |
+| LLM-Judge-Fundiertheit (1-5, Anti-Halluzination) | 5.00 |
+| LLM-Judge-Relevanz (1-5) | 5.00 |
+
 Der Beispielkorpus ist klein und kuratiert, daher sind die Werte konstruktionsbedingt
 hoch. Entscheidend ist, dass das Framework echt ist: Mit einem groesseren,
-verrauschteren Korpus werden dieselben Metriken wirklich aussagekraeftig. Mit
-`--with-llm` werden zusaetzlich generierte Antworten bewertet (Schluesselwort-Recall
-gegen Referenzantworten).
+verrauschteren Korpus werden dieselben Metriken wirklich aussagekraeftig. Der
+**LLM-als-Judge** bewertet jede Antwort auf Fundiertheit (jede Aussage durch den
+abgerufenen Kontext gedeckt) und Relevanz, was genau der Weg ist, um
+Halluzinationen in einem echten RAG-System zu erkennen.
 
 ---
 
@@ -183,7 +195,8 @@ docker compose up --build      # API auf :8000, UI auf :8501
 
 ```bash
 python -m eval.evaluate            # Abruf-Metriken (kostenlos, offline)
-python -m eval.evaluate --with-llm # zusaetzlich generierte Antworten bewerten
+python -m eval.evaluate --with-llm # Antworten bewerten (Schluesselwort-Recall)
+python -m eval.evaluate --judge    # LLM-als-Judge: Fundiertheit + Relevanz
 
 pytest                             # Unit-Tests
 ruff check .                       # Linting

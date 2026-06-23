@@ -88,9 +88,11 @@ are branded NeoDocuMind.
 
 ## Results
 
-Measured on a hand-labelled 12-question benchmark over the bundled sample corpus
-(`python -m eval.evaluate`). Embeddings and reranking are local models, so this
-runs for free and offline.
+Measured on a hand-labelled 12-question benchmark over the bundled sample corpus.
+Retrieval metrics use local models and run for free and offline; answer-quality
+metrics use the configured LLM (here Groq `llama-3.3-70b-versatile`).
+
+**Retrieval** (`python -m eval.evaluate`)
 
 | Metric | Score |
 | --- | --- |
@@ -100,10 +102,19 @@ runs for free and offline.
 | Embedding model | `BAAI/bge-small-en-v1.5` |
 | Reranker model | `cross-encoder/ms-marco-MiniLM-L-6-v2` |
 
+**Answer quality** (`python -m eval.evaluate --judge`)
+
+| Metric | Score |
+| --- | --- |
+| Keyword recall vs. gold answers | 1.00 |
+| LLM-judge faithfulness (1-5, anti-hallucination) | 5.00 |
+| LLM-judge relevance (1-5) | 5.00 |
+
 The sample corpus is small and curated, so scores are high by design. The point
 is that the harness is real: drop in a larger, noisier corpus and the same
-metrics become genuinely discriminating. Add `--with-llm` to also score
-generated answers (keyword recall versus gold answers).
+metrics become genuinely discriminating. The **LLM-as-judge** grades each answer
+for faithfulness (every claim supported by retrieved context) and relevance,
+which is exactly how you catch hallucination in a real RAG system.
 
 ---
 
@@ -186,7 +197,8 @@ docker compose up --build      # API on :8000, UI on :8501
 
 ```bash
 python -m eval.evaluate            # retrieval metrics (free, offline)
-python -m eval.evaluate --with-llm # also score generated answers
+python -m eval.evaluate --with-llm # also score answers (keyword recall)
+python -m eval.evaluate --judge    # add LLM-as-judge faithfulness + relevance
 
 pytest                             # unit tests
 ruff check .                       # lint
