@@ -1,0 +1,9 @@
+# Disable Streamlit's source file watcher. It otherwise introspects every
+# imported module (including unused transformers vision models) and prints noisy
+# torchvision import warnings. The watcher only powers auto-rerun on code edits,
+# which is irrelevant for a deployed demo.
+[server]
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
