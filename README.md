@@ -327,6 +327,10 @@ NeoDocuMind/
 
 ## Design notes
 
+For a full component-by-component rationale (why hybrid, bi- vs cross-encoder,
+FAISS vs Weaviate, fusion choices, evaluation, and trade-offs), see
+[docs/DESIGN.md](docs/DESIGN.md).
+
 - Why hybrid plus rerank? Dense search alone misses exact tokens; BM25 alone
   misses paraphrase. Fusing both and then reranking with a cross-encoder gives
   the best of both worlds at a tiny latency cost.
