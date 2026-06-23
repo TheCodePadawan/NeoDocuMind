@@ -3,7 +3,7 @@ name = "documind"
 version = "0.1.0"
 description = "Production-grade Retrieval-Augmented Generation (RAG) assistant with hybrid search, reranking, citations, and evaluation."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
 authors = [{ name = "NeoDocuMind" }]
 keywords = ["rag", "llm", "langchain", "retrieval", "nlp", "machine-learning"]
