@@ -1,4 +1,4 @@
-# 📄 DocuMind — Production-Grade RAG Document Assistant
+# 📄 NeoDocuMind — Production-Grade RAG Document Assistant
 
 > Ask natural-language questions over your own documents and get **grounded,
 > cited answers** — powered by hybrid retrieval, cross-encoder reranking, and a
@@ -11,7 +11,7 @@
   <img alt="Code style" src="https://img.shields.io/badge/lint-ruff-purple">
 </p>
 
-DocuMind is a compact but **realistic** Retrieval-Augmented Generation (RAG)
+NeoDocuMind is a compact but **realistic** Retrieval-Augmented Generation (RAG)
 system — the kind of "chat with your documents" capability almost every company
 now wants for support, compliance, onboarding, and internal knowledge search.
 It is intentionally built like a product, not a notebook: modular package, REST
@@ -23,7 +23,7 @@ API, web UI, an **evaluation harness with real metrics**, tests, CI, and Docker.
 
 Naïve RAG ("embed everything, do one vector search, dump it into a prompt")
 fails on real corpora: it misses exact keywords, surfaces irrelevant chunks, and
-hallucinates. DocuMind addresses each failure mode explicitly:
+hallucinates. NeoDocuMind addresses each failure mode explicitly:
 
 | Problem with naïve RAG | DocuMind's approach |
 | --- | --- |
@@ -76,6 +76,9 @@ The pipeline is split into a clean, swappable set of modules:
 | `app/streamlit_app.py` | Chat UI with expandable source citations |
 | `eval/evaluate.py` | Retrieval + answer-quality metrics |
 
+> The Python package keeps its module name `documind`; the project/repo is
+> branded **NeoDocuMind**.
+
 ---
 
 ## 📊 Results
@@ -104,8 +107,8 @@ runs for free and offline:
 ### 1. Install
 
 ```bash
-git clone https://github.com/<your-username>/documind.git
-cd documind
+git clone https://github.com/TheCodePadawan/NeoDocuMind.git
+cd NeoDocuMind
 
 python -m venv .venv
 # Windows:
@@ -191,7 +194,7 @@ CI (GitHub Actions) runs lint + tests across Python 3.10–3.12 on every push.
 ## 📁 Project structure
 
 ```
-documind/
+NeoDocuMind/
 ├── src/documind/        # the RAG library (importable, tested)
 ├── app/                 # Streamlit demo UI
 ├── scripts/             # ingest + ask CLIs
