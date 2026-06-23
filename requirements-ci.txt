@@ -1,0 +1,9 @@
+# Minimal runtime deps needed to import the package and run pure-python unit
+# tests in CI without downloading any ML models (no torch / sentence-transformers).
+langchain-core>=0.3,<0.4
+langchain-text-splitters>=0.3,<0.4
+rank-bm25>=0.2.2
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+numpy>=1.26,<3.0

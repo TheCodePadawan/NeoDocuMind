@@ -1,0 +1,31 @@
+# --- Core RAG framework (LangChain 0.3.x line) ---
+langchain>=0.3,<0.4
+langchain-core>=0.3,<0.4
+langchain-community>=0.3,<0.4
+langchain-huggingface>=0.3,<0.4
+langchain-text-splitters>=0.3,<0.4
+
+# --- Optional LLM providers (only the one you choose is required at runtime) ---
+langchain-openai>=0.3,<0.4
+langchain-groq>=0.3,<0.4
+
+# --- Embeddings & reranking (local, free, no API key) ---
+sentence-transformers>=3.0,<6.0
+
+# --- Vector store + lexical search (hybrid retrieval) ---
+faiss-cpu>=1.8
+rank-bm25>=0.2.2
+
+# --- Document loading ---
+pypdf>=4.0
+
+# --- API + UI ---
+fastapi>=0.110
+uvicorn[standard]>=0.29
+streamlit>=1.36
+
+# --- Config & utils ---
+pydantic>=2.7
+pydantic-settings>=2.3
+python-dotenv>=1.0
+numpy>=1.26,<3.0

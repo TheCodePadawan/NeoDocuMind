@@ -1,0 +1,77 @@
+{
+  "description": "Hand-labelled QA pairs over the bundled sample documents. Used to measure retrieval quality (offline, free) and, optionally, answer quality with an LLM judge.",
+  "examples": [
+    {
+      "question": "How many PTO days can I carry over to next year?",
+      "expected_source": "employee_handbook.md",
+      "reference_answer": "Up to 5 unused PTO days may be carried over; any balance above 5 is forfeited on 31 January.",
+      "keywords": ["5", "carry", "forfeit"]
+    },
+    {
+      "question": "How much parental leave does a primary caregiver get?",
+      "expected_source": "employee_handbook.md",
+      "reference_answer": "Primary caregivers are entitled to 16 weeks of fully paid parental leave.",
+      "keywords": ["16 weeks", "primary"]
+    },
+    {
+      "question": "What is the daily meal reimbursement limit during business travel?",
+      "expected_source": "employee_handbook.md",
+      "reference_answer": "Meals during business travel are reimbursed up to 60 USD per day.",
+      "keywords": ["60", "meal"]
+    },
+    {
+      "question": "What is the home-office stipend for new employees?",
+      "expected_source": "employee_handbook.md",
+      "reference_answer": "New employees receive a 250 USD home-office stipend in their first month.",
+      "keywords": ["250", "stipend"]
+    },
+    {
+      "question": "What are the password length and rotation requirements?",
+      "expected_source": "security_policy.md",
+      "reference_answer": "Passphrases must be at least 14 characters and rotated every 180 days, with no reuse of the last five passwords.",
+      "keywords": ["14", "180"]
+    },
+    {
+      "question": "How quickly must a security incident be reported?",
+      "expected_source": "security_policy.md",
+      "reference_answer": "Suspected security incidents must be reported within one hour of discovery.",
+      "keywords": ["one hour", "report"]
+    },
+    {
+      "question": "What encryption standard is required for data at rest?",
+      "expected_source": "security_policy.md",
+      "reference_answer": "Data at rest must be encrypted using AES-256.",
+      "keywords": ["AES-256"]
+    },
+    {
+      "question": "How are the three data classification tiers defined?",
+      "expected_source": "security_policy.md",
+      "reference_answer": "Data is classified as Public, Internal, or Confidential.",
+      "keywords": ["public", "internal", "confidential"]
+    },
+    {
+      "question": "How much does the Professional plan cost per user?",
+      "expected_source": "product_faq.md",
+      "reference_answer": "The Professional plan costs 79 USD per user per month.",
+      "keywords": ["79", "professional"]
+    },
+    {
+      "question": "What uptime does the Enterprise SLA guarantee?",
+      "expected_source": "product_faq.md",
+      "reference_answer": "Enterprise customers are guaranteed 99.9% monthly uptime.",
+      "keywords": ["99.9"]
+    },
+    {
+      "question": "How long is the free trial and which plan does it use?",
+      "expected_source": "product_faq.md",
+      "reference_answer": "A 14-day free trial of the Professional plan is available with no credit card required.",
+      "keywords": ["14", "professional", "trial"]
+    },
+    {
+      "question": "In which regions can customer data be hosted?",
+      "expected_source": "product_faq.md",
+      "reference_answer": "Customer data can be hosted in the United States, the European Union, or Australia.",
+      "keywords": ["united states", "european union", "australia"]
+    }
+  ]
+}

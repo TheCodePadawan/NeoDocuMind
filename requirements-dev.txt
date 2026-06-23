@@ -1,0 +1,5 @@
+# Lightweight dependencies for linting and unit tests (used in CI).
+# These avoid heavy model downloads so CI stays fast and green.
+-r requirements-ci.txt
+pytest==8.4.2
+ruff==0.14.5

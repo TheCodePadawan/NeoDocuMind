@@ -1,0 +1,156 @@
+{
+  "summary": {
+    "num_questions": 12,
+    "hit_rate": 1.0,
+    "mrr": 1.0,
+    "rerank_top_n": 4,
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  },
+  "details": [
+    {
+      "question": "How many PTO days can I carry over to next year?",
+      "expected_source": "employee_handbook.md",
+      "retrieved_sources": [
+        "employee_handbook.md",
+        "employee_handbook.md",
+        "product_faq.md",
+        "employee_handbook.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "How much parental leave does a primary caregiver get?",
+      "expected_source": "employee_handbook.md",
+      "retrieved_sources": [
+        "employee_handbook.md",
+        "employee_handbook.md",
+        "employee_handbook.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "What is the daily meal reimbursement limit during business travel?",
+      "expected_source": "employee_handbook.md",
+      "retrieved_sources": [
+        "employee_handbook.md",
+        "product_faq.md",
+        "employee_handbook.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "What is the home-office stipend for new employees?",
+      "expected_source": "employee_handbook.md",
+      "retrieved_sources": [
+        "employee_handbook.md",
+        "employee_handbook.md",
+        "employee_handbook.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "What are the password length and rotation requirements?",
+      "expected_source": "security_policy.md",
+      "retrieved_sources": [
+        "security_policy.md",
+        "security_policy.md",
+        "employee_handbook.md",
+        "employee_handbook.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "How quickly must a security incident be reported?",
+      "expected_source": "security_policy.md",
+      "retrieved_sources": [
+        "security_policy.md",
+        "employee_handbook.md",
+        "security_policy.md",
+        "security_policy.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "What encryption standard is required for data at rest?",
+      "expected_source": "security_policy.md",
+      "retrieved_sources": [
+        "security_policy.md",
+        "security_policy.md",
+        "security_policy.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "How are the three data classification tiers defined?",
+      "expected_source": "security_policy.md",
+      "retrieved_sources": [
+        "security_policy.md",
+        "security_policy.md",
+        "product_faq.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "How much does the Professional plan cost per user?",
+      "expected_source": "product_faq.md",
+      "retrieved_sources": [
+        "product_faq.md",
+        "product_faq.md",
+        "employee_handbook.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "What uptime does the Enterprise SLA guarantee?",
+      "expected_source": "product_faq.md",
+      "retrieved_sources": [
+        "product_faq.md",
+        "product_faq.md",
+        "employee_handbook.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "How long is the free trial and which plan does it use?",
+      "expected_source": "product_faq.md",
+      "retrieved_sources": [
+        "product_faq.md",
+        "security_policy.md",
+        "employee_handbook.md",
+        "employee_handbook.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "question": "In which regions can customer data be hosted?",
+      "expected_source": "product_faq.md",
+      "retrieved_sources": [
+        "product_faq.md",
+        "security_policy.md",
+        "security_policy.md",
+        "product_faq.md"
+      ],
+      "hit": true,
+      "reciprocal_rank": 1.0
+    }
+  ]
+}
