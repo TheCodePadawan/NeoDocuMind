@@ -7,10 +7,12 @@
 > provider-agnostic LLM layer.
 
 <p align="left">
-  <img alt="CI" src="https://img.shields.io/badge/CI-GitHub%20Actions-blue">
+  <a href="https://github.com/TheCodePadawan/NeoDocuMind/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/TheCodePadawan/NeoDocuMind/actions/workflows/ci.yml/badge.svg">
+  </a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
-  <img alt="Code style" src="https://img.shields.io/badge/lint-ruff-purple">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-green"></a>
+  <a href="https://github.com/astral-sh/ruff"><img alt="Code style" src="https://img.shields.io/badge/lint-ruff-purple"></a>
 </p>
 
 NeoDocuMind is a compact but realistic Retrieval-Augmented Generation (RAG)
