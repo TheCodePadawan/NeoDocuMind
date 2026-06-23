@@ -68,9 +68,9 @@ def main() -> None:
             "- **Provider-agnostic LLM**: OpenAI / Groq / Ollama"
         )
         st.divider()
-        st.markdown(
-            "Build the index first:\n\n"
-            "```bash\npython -m scripts.ingest_sample\n```"
+        st.caption(
+            "The search index over the bundled sample documents is built "
+            "automatically on first launch, so you can start asking right away."
         )
 
     try:

@@ -1,5 +1,7 @@
 # --- Core RAG framework (LangChain 0.3.x line) ---
-langchain>=0.3,<0.4
+# Note: the `langchain` meta-package is intentionally NOT a direct dependency.
+# Hybrid retrieval/reranking is implemented directly (see retriever.py), which
+# keeps the import graph small and portable across Python versions.
 langchain-core>=0.3,<0.4
 langchain-community>=0.3,<0.4
 langchain-huggingface>=0.3,<0.4

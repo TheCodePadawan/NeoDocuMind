@@ -5,23 +5,29 @@ Two retrieval signals are combined for robustness:
 * **Dense (FAISS)** captures semantic similarity ("car" ~ "automobile").
 * **Sparse (BM25)** captures exact keyword / rare-term matches (IDs, acronyms).
 
-Their results are fused with a reciprocal-rank ensemble, then a cross-encoder
-reranker re-scores the top candidates by reading each (query, chunk) pair
+Their rankings are fused with Reciprocal Rank Fusion (RRF), then a cross-encoder
+reranker re-scores the surviving candidates by reading each (query, chunk) pair
 together. This hybrid + rerank design consistently beats single-vector search,
 especially on enterprise jargon.
+
+Implemented directly on top of ``rank_bm25`` and ``sentence-transformers`` (no
+dependency on the ``langchain`` meta-package), which keeps the import graph small
+and portable across Python versions.
 """
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from langchain_core.documents import Document
-from langchain_core.retrievers import BaseRetriever
 
 from .config import Settings, get_settings
 
 DOCSTORE_FILE = "chunks.json"
+RRF_K = 60  # standard Reciprocal Rank Fusion smoothing constant
+_TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 def save_documents(documents: list[Document], storage_dir: str | Path) -> None:
@@ -48,28 +54,103 @@ def load_documents(storage_dir: str | Path) -> list[Document]:
     ]
 
 
-def build_bm25_retriever(documents: list[Document], k: int) -> BaseRetriever:
-    from langchain_community.retrievers import BM25Retriever
-
-    retriever = BM25Retriever.from_documents(documents)
-    retriever.k = k
-    return retriever
+def _tokenize(text: str) -> list[str]:
+    return _TOKEN_RE.findall(text.lower())
 
 
-def build_dense_retriever(vectorstore, k: int) -> BaseRetriever:
-    return vectorstore.as_retriever(search_kwargs={"k": k})
+def _doc_key(doc: Document, fallback: int) -> str:
+    return doc.metadata.get("citation_id") or doc.metadata.get("source") or str(fallback)
 
 
-def build_reranker(settings: Settings):
-    """Cross-encoder reranker that reads (query, chunk) pairs jointly."""
-    from langchain.retrievers.document_compressors import CrossEncoderReranker
-    from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+class HybridRetriever:
+    """Dense + sparse retrieval fused with RRF, then cross-encoder reranked.
 
-    model = HuggingFaceCrossEncoder(model_name=settings.reranker_model)
-    return CrossEncoderReranker(model=model, top_n=settings.rerank_top_n)
+    Exposes :meth:`invoke` returning a list of :class:`Document`, matching the
+    minimal retriever interface the rest of the pipeline depends on. Heavy models
+    (BM25 index, cross-encoder) are built lazily on first use.
+    """
+
+    def __init__(
+        self,
+        documents: list[Document],
+        vectorstore,
+        settings: Settings | None = None,
+    ) -> None:
+        self.documents = documents
+        self.vectorstore = vectorstore
+        self.settings = settings or get_settings()
+        self._bm25 = None
+        self._reranker = None
+
+    # --- lazy components -------------------------------------------------
+    def _ensure_bm25(self):
+        if self._bm25 is None:
+            from rank_bm25 import BM25Okapi
+
+            corpus = [_tokenize(d.page_content) for d in self.documents]
+            self._bm25 = BM25Okapi(corpus)
+        return self._bm25
+
+    def _ensure_reranker(self):
+        if self._reranker is None:
+            from sentence_transformers import CrossEncoder
+
+            self._reranker = CrossEncoder(self.settings.reranker_model)
+        return self._reranker
+
+    # --- retrieval signals ----------------------------------------------
+    def _dense(self, query: str, k: int) -> list[Document]:
+        return self.vectorstore.similarity_search(query, k=k)
+
+    def _sparse(self, query: str, k: int) -> list[Document]:
+        bm25 = self._ensure_bm25()
+        scores = bm25.get_scores(_tokenize(query))
+        top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
+        return [self.documents[i] for i in top]
+
+    # --- fusion + rerank -------------------------------------------------
+    @staticmethod
+    def _reciprocal_rank_fusion(
+        ranked_lists: list[list[Document]],
+    ) -> list[Document]:
+        scores: dict[str, float] = {}
+        by_key: dict[str, Document] = {}
+        for ranked in ranked_lists:
+            for rank, doc in enumerate(ranked):
+                key = _doc_key(doc, rank)
+                scores[key] = scores.get(key, 0.0) + 1.0 / (RRF_K + rank + 1)
+                by_key.setdefault(key, doc)
+        return sorted(by_key.values(), key=lambda d: scores[_doc_key(d, 0)], reverse=True)
+
+    def _rerank(self, query: str, docs: list[Document]) -> list[Document]:
+        if not docs:
+            return []
+        reranker = self._ensure_reranker()
+        pairs = [(query, d.page_content) for d in docs]
+        scores = reranker.predict(pairs)
+        scored = zip(docs, scores, strict=False)
+        ordered = sorted(scored, key=lambda pair: pair[1], reverse=True)
+        return [doc for doc, _ in ordered[: self.settings.rerank_top_n]]
+
+    # --- public API ------------------------------------------------------
+    def invoke(self, query: str) -> list[Document]:
+        k = self.settings.retrieval_top_k
+        dense = self._dense(query, k)
+        sparse = self._sparse(query, k)
+        fused = self._reciprocal_rank_fusion([dense, sparse])
+        return self._rerank(query, fused[:k])
 
 
-def load_hybrid_retriever(settings: Settings | None = None) -> BaseRetriever:
+def build_hybrid_retriever(
+    documents: list[Document],
+    vectorstore,
+    settings: Settings | None = None,
+) -> HybridRetriever:
+    """Compose dense + sparse retrieval, fuse, then rerank to the final top-N."""
+    return HybridRetriever(documents, vectorstore, settings or get_settings())
+
+
+def load_hybrid_retriever(settings: Settings | None = None) -> HybridRetriever:
     """Load the persisted index and assemble the hybrid retriever (no LLM needed).
 
     Useful for retrieval-only evaluation, which runs fully offline and free.
@@ -83,25 +164,3 @@ def load_hybrid_retriever(settings: Settings | None = None) -> BaseRetriever:
     vectorstore = load_vectorstore(settings.storage_path, embeddings)
     documents = load_documents(settings.storage_path)
     return build_hybrid_retriever(documents, vectorstore, settings)
-
-
-def build_hybrid_retriever(
-    documents: list[Document],
-    vectorstore,
-    settings: Settings | None = None,
-) -> BaseRetriever:
-    """Compose dense + sparse retrieval, fuse, then rerank to the final top-N."""
-    from langchain.retrievers import ContextualCompressionRetriever, EnsembleRetriever
-
-    settings = settings or get_settings()
-    k = settings.retrieval_top_k
-
-    dense = build_dense_retriever(vectorstore, k)
-    sparse = build_bm25_retriever(documents, k)
-
-    ensemble = EnsembleRetriever(retrievers=[dense, sparse], weights=[0.5, 0.5])
-
-    reranker = build_reranker(settings)
-    return ContextualCompressionRetriever(
-        base_compressor=reranker, base_retriever=ensemble
-    )
