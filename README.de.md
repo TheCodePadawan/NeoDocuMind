@@ -8,6 +8,9 @@
 > LLM-Schicht.
 
 <p align="left">
+  <a href="https://euhtnnhj3sxtqtxd2skv7n.streamlit.app/">
+    <img alt="Live Demo" src="https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?logo=streamlit&logoColor=white">
+  </a>
   <a href="https://github.com/TheCodePadawan/NeoDocuMind/actions/workflows/ci.yml">
     <img alt="CI" src="https://github.com/TheCodePadawan/NeoDocuMind/actions/workflows/ci.yml/badge.svg">
   </a>
