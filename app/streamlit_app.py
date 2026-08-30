@@ -39,7 +39,7 @@ st.set_page_config(page_title="NeoDocuMind", layout="wide")
 try:
     for _key, _value in st.secrets.items():
         if isinstance(_value, str):
-            os.environ.setdefault(_key, _value)
+            os.environ[_key] = _value
 except Exception:
     pass
 
@@ -160,8 +160,21 @@ def main() -> None:
         st.markdown(question)
 
     with st.chat_message("assistant"):
-        with st.spinner("Retrieving and reasoning..."):
-            result = pipeline.answer(question)
+        try:
+            with st.spinner("Retrieving and reasoning..."):
+                result = pipeline.answer(question)
+        except Exception as exc:
+            message = (
+                f"The language model request failed: {exc}\n\n"
+                "If this mentions a missing model, set `GROQ_MODEL` in Streamlit "
+                "Secrets to `openai/gpt-oss-120b` (Groq retired "
+                "`llama-3.3-70b-versatile` on 16 Aug 2026) and reboot the app."
+            )
+            st.error(message)
+            st.session_state.history.append(
+                {"role": "assistant", "content": message, "sources": []}
+            )
+            return
         st.markdown(result.answer)
         _render_sources(result.sources)
 

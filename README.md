@@ -93,7 +93,7 @@ are branded NeoDocuMind.
 
 Measured on a hand-labelled 12-question benchmark over the bundled sample corpus.
 Retrieval metrics use local models and run for free and offline; answer-quality
-metrics use the configured LLM (here Groq `llama-3.3-70b-versatile`).
+metrics use the configured LLM (here Groq `openai/gpt-oss-120b`).
 
 **Retrieval** (`python -m eval.evaluate`)
 

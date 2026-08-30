@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="gpt-4o-mini")
 
     groq_api_key: str = Field(default="")
-    groq_model: str = Field(default="llama-3.3-70b-versatile")
+    groq_model: str = Field(default="openai/gpt-oss-120b")
 
     ollama_model: str = Field(default="llama3.1")
     ollama_base_url: str = Field(default="http://localhost:11434")

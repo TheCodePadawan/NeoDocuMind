@@ -96,7 +96,7 @@ Repository tragen die Marke NeoDocuMind.
 Gemessen an einem handannotierten Benchmark mit 12 Fragen ueber dem
 mitgelieferten Beispielkorpus. Abruf-Metriken nutzen lokale Modelle und laufen
 kostenlos und offline; Antwortqualitaets-Metriken nutzen das konfigurierte LLM
-(hier Groq `llama-3.3-70b-versatile`).
+(hier Groq `openai/gpt-oss-120b`).
 
 **Abruf** (`python -m eval.evaluate`)
 
